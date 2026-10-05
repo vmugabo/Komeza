@@ -1,0 +1,10 @@
+import React, { useState } from 'react';
+import RiskBadge from '../components/RiskBadge';
+
+export default function Interventions({ students, onSelect }) {
+  const [items, setItems] = useState(() => JSON.parse(localStorage.getItem('komeza-interventions') || '[]'));
+  const [studentId, setStudentId] = useState('');
+  const [note, setNote] = useState('');
+  const save = (event) => { event.preventDefault(); if (!studentId || !note.trim()) return; const next = [{ id: Date.now(), studentId, note: note.trim(), date: new Date().toLocaleDateString() }, ...items]; setItems(next); localStorage.setItem('komeza-interventions', JSON.stringify(next)); setNote(''); };
+  return <section className="page"><div className="page-heading"><div><p className="eyebrow">Teacher follow-up</p><h1>Interventions</h1><p>Keep short local notes for conversations and support actions.</p></div><span className="data-label">Saved in this browser</span></div><div className="intervention-grid"><form className="panel form-panel" onSubmit={save}><p className="eyebrow">Add a note</p><h2>Record an intervention</h2><label>Student<select value={studentId} onChange={(e) => setStudentId(e.target.value)}><option value="">Choose a student</option>{students.map((s) => <option key={s.student_id} value={s.student_id}>{s.student_id} · {s.gender}</option>)}</select></label><label>Note<textarea rows="5" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Discussed attendance and agreed on a study plan." /></label><button className="primary" type="submit">Save locally</button></form><div className="panel"><p className="eyebrow">Recent notes</p><h2>Intervention log</h2>{items.length ? items.map((item) => { const student = students.find((s) => s.student_id === item.studentId); return <div className="intervention" key={item.id}><div><strong>{item.studentId}</strong><small>{item.date} · {student?.risks.dropout && <RiskBadge value={student.risks.dropout} />}</small></div><p>{item.note}</p><button className="text-button" onClick={() => onSelect(student)}>Open profile</button></div>; }) : <p className="muted">No interventions recorded yet.</p>}</div></div></section>;
+}
