@@ -1,0 +1,68 @@
+{
+  "risk_levels": [
+    "Low",
+    "Medium",
+    "High"
+  ],
+  "numeric_features": [
+    "age",
+    "study_hours",
+    "attendance_percentage",
+    "math_score",
+    "science_score",
+    "english_score"
+  ],
+  "categorical_features": [
+    "gender",
+    "school_type",
+    "parent_education",
+    "internet_access",
+    "travel_time",
+    "extra_activities",
+    "study_method"
+  ],
+  "models": {
+    "academic_risk": {
+      "file": "academic_risk_model.joblib",
+      "model": "Logistic Regression",
+      "macro_f1": 0.9831384465166589,
+      "high_recall": 1.0,
+      "features": [
+        "age",
+        "study_hours",
+        "attendance_percentage",
+        "math_score",
+        "science_score",
+        "english_score",
+        "gender",
+        "school_type",
+        "parent_education",
+        "internet_access",
+        "travel_time",
+        "extra_activities",
+        "study_method"
+      ]
+    },
+    "dropout_risk": {
+      "file": "dropout_risk_model.joblib",
+      "model": "Logistic Regression",
+      "macro_f1": 0.991208773641397,
+      "high_recall": 1.0,
+      "features": [
+        "age",
+        "study_hours",
+        "attendance_percentage",
+        "math_score",
+        "science_score",
+        "english_score",
+        "gender",
+        "school_type",
+        "parent_education",
+        "internet_access",
+        "travel_time",
+        "extra_activities",
+        "study_method"
+      ]
+    }
+  }
+}
