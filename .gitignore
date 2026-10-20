@@ -1,0 +1,15 @@
+frontend/.env.local
+frontend/.env.*.local
+frontend/node_modules/
+frontend/dist/
+__pycache__/
+.DS_Store
+
+# Private student data and generated model outputs
+frontend/public/data/*.csv
+komeza_wige/*.csv
+komeza_wige/model_exports/
+*.joblib
+
+# Private project material
+Video Link.docx

@@ -29,13 +29,13 @@ The source code and project history are available on GitHub:
 ```text
 Komeza/
 ├── frontend/                    # React/Vite teacher workspace
-│   ├── public/data/             # CSV data displayed by the frontend
+│   ├── public/data/             # Private CSV data, kept on Linode
 │   ├── src/                     # Pages, components, styles, and CSV services
 │   └── package.json
 ├── komeza_wige/
-│   ├── Student_Performance.csv  # Source dataset
+│   ├── student dropout.csv       # Private source dataset, kept on Linode
 │   ├── student_risk_assessment.ipynb
-│   └── model_exports/            # Exported Python model artefacts
+│   └── model_exports/            # Private models and generated outputs
 └── README.md
 ```
 
@@ -75,49 +75,81 @@ jupyter notebook komeza_wige/student_risk_assessment.ipynb
 ```
 
 Run the notebook cells in order to reproduce the data exploration, model
-comparison, and exported model artefacts. The root
+comparison, reliability checks, and exported model artefacts. The root
 [`requirements.txt`](requirements.txt) contains the Python dependencies used by
 the notebook.
 
-### 3. Set up and run the teacher frontend
+### 3. Production frontend
 
-In a second terminal:
+The teacher workspace is hosted on the Linode server and served by Nginx.
+The GitHub repository contains the source and deployment configuration; the
+production build and runtime environment are kept on the server.
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+The frontend reads private CSV files from `frontend/public/data/` and uses
+Supabase Auth for sign-in, session restoration, and sign-out. Those CSV files,
+the source dataset, model exports, and intervention notes remain on Linode and
+are excluded from GitHub. Intervention notes are still stored in `localStorage`;
+they are not yet protected database records. The Supabase URL and
+publishable/anon key are configured privately during the server deployment and
+are never committed to GitHub.
 
-Open the local URL printed by Vite, normally
-[`http://localhost:5173`](http://localhost:5173). The frontend is a browser-only
-demo: it reads the CSV files in `frontend/public/data/` and stores intervention
-notes in `localStorage`. It does not currently require a server, database,
-Supabase, or API.
-
-To create and preview a production build:
-
-```bash
-npm run build
-npm run preview
-```
+When deploying from a fresh GitHub clone, copy the private `frontend/public/data/`
+files to the checkout before running `npm run build`. Do not commit those files.
 
 ## How it works
 
-1. Load and inspect the student data.
-2. Remove duplicate records.
-3. Explore the data with summaries, tables, and charts.
-4. Create transparent academic- and dropout-risk rules.
-5. Prepare the features for machine learning.
-6. Train and compare logistic regression, decision tree, random forest, and
-   optionally XGBoost models.
-7. Compare accuracy, balanced performance, macro-F1, and high-risk detection.
-8. Export the strongest models and present prepared predictions in the teacher
-   workspace.
+1. Load and validate the 649-row `student dropout.csv` dataset.
+2. Define academic risk from final attainment bands while excluding `Final_Grade`
+   from the predictors.
+3. Train an academic-risk model using early assessment and student-context
+   factors, including `Grade_1`, `Grade_2`, failures, absences, and study time.
+4. Train a separate dropout-screening model using contextual, support, health,
+   wellbeing, and attendance-related factors while excluding every grade column.
+5. Compare logistic regression and random forest models with stratified
+   five-fold cross-validation.
+6. Export the selected models, metrics, ranked factor signals, and student
+   predictions.
+
+### Interpretation of the new outcomes
+
+The supplied `Dropped_Out` column is exactly equal to `Final_Grade < 10` for
+every row. The dropout model uses this dataset label and excludes `Grade_1`,
+`Grade_2`, and `Final_Grade` to test whether non-performance factors provide an
+earlier warning. Independent enrollment, withdrawal, or completion records
+would be needed to validate the label against real-world retention outcomes.
+
+### Dataset schema note
+
+The repository file currently contains 649 rows and 34 columns. The accompanying
+description says 700 rows and 36 columns, so the notebook reports this
+discrepancy rather than assuming the documented dimensions. The source encodes
+`Travel_Time` and `Study_Time` as ordinal values from 1 to 4; the notebook
+decodes them into labelled bands before modelling. Education codes use 0–4 and
+family, wellbeing, and behaviour ratings use 1–5 where documented.
 
 The current React frontend displays prediction results already present in CSV
 files. The `.joblib` models are not loaded directly by React; they are Python
 artefacts intended for a future inference service.
+
+### Current evaluation
+
+The factor-specific models are evaluated with stratified five-fold
+cross-validation. The current run selected random forests:
+
+| Output | Cross-validated balanced accuracy | Cross-validated macro-F1 |
+| --- | ---: | ---: |
+| Academic risk | 0.815 | 0.808 |
+| Dropout screening | 0.694 | 0.692 |
+
+The notebook also exports `model_metrics.csv`, `calibration_metrics.csv`, and
+`subgroup_outcomes.csv`. These should be reviewed before any operational use.
+The dropout-screening score is deliberately lower-confidence because it excludes
+all grade columns and the supplied target is derived from final grade.
+
+The frontend CSVs are regenerated from the same 649 source records. Empty
+fields represent information that the source dataset does not contain; the
+pipeline does not invent attendance percentages, assignment completion, dates,
+or intervention history.
 
 ## Designs and interface references
 

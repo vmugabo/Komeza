@@ -35,15 +35,6 @@ export function getFactors(factors, studentId, riskType) {
     .slice(0, 5);
 }
 
-export function formatPercent(value) {
-  const parsed = number(value);
-  return parsed === null ? '—' : `${parsed.toFixed(0)}%`;
-}
-
-export function riskClass(risk) {
-  return String(risk || 'unknown').toLowerCase();
-}
-
 export function validData(data) {
   const required = ['students', 'attendance', 'academic', 'engagement', 'predictions', 'factors'];
   return required.every((key) => Array.isArray(data[key]) && data[key].length > 0);
