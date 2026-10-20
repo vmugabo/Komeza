@@ -2,8 +2,6 @@
 
 This is a React/Vite teacher workspace. It reads the existing project CSV files
 from `public/data/` in the browser and uses Supabase Auth for authentication.
-The CSV records remain static browser data for now; Supabase database tables
-and intervention persistence can be added separately.
 
 ## Production deployment
 
@@ -29,10 +27,17 @@ For the current email/password setup:
 The authenticated user's full name is read from `user_metadata.full_name` when
 present, with the email used as the fallback display name.
 
+Access is scoped from Supabase user metadata: users whose `role` is
+`district_official` (or an equivalent district role) can see all schools;
+other users must have a `school_id` or `school_ids` value and can only see
+records for those schools. Accounts without a school assignment are shown an
+access configuration message rather than student data. This browser-side
+scope is appropriate for the current static CSV deployment; confidential
+production data should be moved behind an authenticated service.
+
 Student risk labels, attendance, academic records, assignment completion, and
-risk factors are read from private CSV files present on the Linode deployment.
-Interventions are still stored in browser `localStorage`; they are not yet
-protected database records.
+risk factors are read from private CSV files present on the deployment.
+Interventions are still stored in browser `localStorage`.
 
 ## CSV sources
 

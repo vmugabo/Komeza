@@ -1,19 +1,213 @@
 import React from 'react';
-import { getFactors } from '../utils/data';
+import { displayValue, getFactors, percentValue } from '../utils/data';
 import RiskBadge from '../components/RiskBadge';
 import MetricCard from '../components/MetricCard';
 
 export default function StudentProfile({ student, factors, onBack }) {
   const academicFactors = getFactors(factors, student.student_id, 'academic');
   const dropoutFactors = getFactors(factors, student.student_id, 'dropout');
-  return <section className="page">
-    <button className="back-link" onClick={onBack}>← Back to students</button>
-    <div className="profile-title"><div><p className="eyebrow">Student profile</p><h1>{student.student_id}</h1><p>{student.gender} · {student.school_id}</p></div><div className="profile-risks"><span>Academic <RiskBadge value={student.risks.academic} /></span><span>Dropout screening <RiskBadge value={student.risks.dropout} /></span></div></div>
-    <div className="metrics four"><MetricCard label="Absences" value={student.attendance.days_absent || '—'} detail="reported absences" /><MetricCard label="Study time" value={student.engagement.study_hours_per_week || '—'} detail="source scale 1–4" /><MetricCard label="Grade 1" value={student.academic.previous_exam_score || '—'} detail="early assessment" /><MetricCard label="Grade 2" value={student.academic.recent_exam_score || '—'} detail="later assessment" /></div>
-    <div className="profile-grid">
-      <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Academic record</p><h2>Assessment context</h2></div></div><dl className="details"><div><dt>Grade 1</dt><dd>{student.academic.previous_exam_score || '—'}</dd></div><div><dt>Grade 2</dt><dd>{student.academic.recent_exam_score || '—'}</dd></div><div><dt>Change</dt><dd>{student.academic.performance_change || '—'}</dd></div><div><dt>Previous failures</dt><dd>{student.academic.previous_failed_subjects || '—'}</dd></div><div><dt>Absences</dt><dd>{student.attendance.days_absent || '—'}</dd></div></dl></div>
-      <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Model signals</p><h2>Ranked factors</h2></div></div><div className="details"><strong>Academic risk</strong>{academicFactors.slice(0, 3).map((factor) => <div key={`academic-${factor.factor_name}`}><dt>{factor.factor_name}</dt><dd>{Number(factor.contribution).toFixed(3)}</dd></div>)}<strong>Dropout screening</strong>{dropoutFactors.slice(0, 3).map((factor) => <div key={`dropout-${factor.factor_name}`}><dt>{factor.factor_name}</dt><dd>{Number(factor.contribution).toFixed(3)}</dd></div>)}</div></div>
-    </div>
-    <div className="panel recent-data"><p className="eyebrow">Interpretation</p><h2>Use as a support prompt</h2><p className="muted">These are screening signals from a small retrospective dataset. They should support a conversation rather than determine a student’s outcome.</p></div>
-  </section>;
+  const interventions = (() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem('komeza-interventions') || '[]',
+      ).filter((item) => item.studentId === student.student_id);
+    } catch {
+      return [];
+    }
+  })();
+  return (
+    <section className='page'>
+      <button className='back-link' onClick={onBack}>
+        ← Back to students
+      </button>
+      <div className='profile-title'>
+        <div>
+          <p className='eyebrow'>Student profile</p>
+          <h1>{student.student_id}</h1>
+          <p>
+            {displayValue(student.gender)} · {displayValue(student.school_id)} ·
+            Grade {displayValue(student.grade)}
+          </p>
+        </div>
+        <div className='profile-risks'>
+          <span>
+            Academic <RiskBadge value={student.risks.academic} />
+          </span>
+          <span>
+            Dropout <RiskBadge value={student.risks.dropout} />
+          </span>
+        </div>
+      </div>
+      <div className='metrics four'>
+        <MetricCard
+          label='Attendance'
+          value={
+            percentValue(student.attendance.attendance_rate) ||
+            displayValue(student.attendance.days_absent)
+          }
+          detail={
+            percentValue(student.attendance.attendance_rate)
+              ? 'reported attendance'
+              : 'days absent'
+          }
+        />
+        <MetricCard
+          label='Assignments'
+          value={displayValue(student.engagement.completed_assignments)}
+          detail={`${displayValue(student.engagement.missed_assignments)} missed`}
+        />
+        <MetricCard
+          label='Grade 1'
+          value={displayValue(student.academic.previous_exam_score)}
+          detail='previous assessment'
+        />
+        <MetricCard
+          label='Grade 2'
+          value={displayValue(student.academic.recent_exam_score)}
+          detail='recent assessment'
+        />
+      </div>
+      <div className='profile-grid'>
+        <div className='panel'>
+          <div className='panel-heading'>
+            <div>
+              <p className='eyebrow'>Student indicators</p>
+              <h2>Academic and engagement record</h2>
+            </div>
+          </div>
+          <dl className='details'>
+            <div>
+              <dt>Previous assessment</dt>
+              <dd>{displayValue(student.academic.previous_exam_score)}</dd>
+            </div>
+            <div>
+              <dt>Recent assessment</dt>
+              <dd>{displayValue(student.academic.recent_exam_score)}</dd>
+            </div>
+            <div>
+              <dt>Performance change</dt>
+              <dd>{displayValue(student.academic.performance_change)}</dd>
+            </div>
+            <div>
+              <dt>Previous failed subjects</dt>
+              <dd>{displayValue(student.academic.previous_failed_subjects)}</dd>
+            </div>
+            <div>
+              <dt>Attendance rate</dt>
+              <dd>{percentValue(student.attendance.attendance_rate) || '—'}</dd>
+            </div>
+            <div>
+              <dt>Days absent</dt>
+              <dd>{displayValue(student.attendance.days_absent)}</dd>
+            </div>
+            <div>
+              <dt>Completed assignments</dt>
+              <dd>{displayValue(student.engagement.completed_assignments)}</dd>
+            </div>
+            <div>
+              <dt>Missed assignments</dt>
+              <dd>{displayValue(student.engagement.missed_assignments)}</dd>
+            </div>
+            <div>
+              <dt>Completion rate</dt>
+              <dd>
+                {percentValue(student.engagement.assignment_completion_rate) ||
+                  '—'}
+              </dd>
+            </div>
+            <div>
+              <dt>Study time</dt>
+              <dd>{displayValue(student.engagement.study_hours_per_week)}</dd>
+            </div>
+          </dl>
+        </div>
+        <div className='panel'>
+          <div className='panel-heading'>
+            <div>
+              <p className='eyebrow'>Risk results</p>
+              <h2>Risk levels and factors</h2>
+            </div>
+          </div>
+          <div className='prediction-callout'>
+            <span>Academic risk</span>
+            <RiskBadge value={student.risks.academic} />
+            <small>
+              {percentValue(student.prediction.prediction_probability) ||
+                'Probability not supplied'}
+            </small>
+          </div>
+          <div className='factor-section'>
+            <strong>Academic factors</strong>
+            {academicFactors.length ? (
+              academicFactors.slice(0, 3).map((factor) => (
+                <div className='factor' key={`academic-${factor.factor_name}`}>
+                  <span>
+                    <strong>{factor.factor_name}</strong>
+                    <small>{displayValue(factor.factor_value)}</small>
+                  </span>
+                  <b>{displayValue(factor.contribution)}</b>
+                </div>
+              ))
+            ) : (
+              <p className='muted'>No academic factors supplied.</p>
+            )}
+          </div>
+          <div className='prediction-callout'>
+            <span>Dropout risk</span>
+            <RiskBadge value={student.risks.dropout} />
+            <small>Current risk result</small>
+          </div>
+          <div className='factor-section'>
+            <strong>Dropout factors</strong>
+            {dropoutFactors.length ? (
+              dropoutFactors.slice(0, 3).map((factor) => (
+                <div className='factor' key={`dropout-${factor.factor_name}`}>
+                  <span>
+                    <strong>{factor.factor_name}</strong>
+                    <small>{displayValue(factor.factor_value)}</small>
+                  </span>
+                  <b>{displayValue(factor.contribution)}</b>
+                </div>
+              ))
+            ) : (
+              <p className='muted'>No dropout factors supplied.</p>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className='panel recent-data'>
+        <div className='panel-heading'>
+          <div>
+            <p className='eyebrow'>Support history</p>
+            <h2>Intervention history</h2>
+          </div>
+        </div>
+        {interventions.length ? (
+          interventions.map((item) => (
+            <div className='intervention compact-intervention' key={item.id}>
+              <div>
+                <strong>{item.status || 'Recorded'}</strong>
+                <small>
+                  {item.date}
+                  {item.followUpDate ? ` · follow-up ${item.followUpDate}` : ''}
+                </small>
+              </div>
+              <p>{item.note}</p>
+            </div>
+          ))
+        ) : (
+          <p className='muted'>
+            No local intervention notes recorded for this student.
+          </p>
+        )}
+      </div>
+      <div className='notice'>
+        <strong>Support reminder</strong>
+        <span>
+          Use these results to guide a supportive conversation and decide what
+          to review next.
+        </span>
+      </div>
+    </section>
+  );
 }

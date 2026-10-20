@@ -1,0 +1,93 @@
+.profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.profile-trigger > span:last-child {
+  min-width: 0;
+}
+
+.profile-trigger strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-trigger small {
+  display: block;
+  color: #b7cbd8;
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.profile-photo,
+.profile-menu-photo {
+  object-fit: cover;
+}
+
+.teacher-card {
+  position: relative;
+}
+
+.profile-menu {
+  position: absolute;
+  z-index: 3;
+  top: 58px;
+  left: 8px;
+  right: 8px;
+  padding: 15px;
+  background: #fff;
+  color: #223142;
+  border-radius: 7px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.profile-menu-photo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin-bottom: 9px;
+}
+
+.profile-menu > strong {
+  font-size: 13px;
+}
+
+.profile-menu > span,
+.profile-menu > small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #71808c;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.profile-menu > small {
+  color: #2b7190;
+}
+
+.profile-menu > button {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #e5ebef;
+  background: transparent;
+  color: #a44137;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 11px 0 0;
+  margin-top: 12px;
+}
