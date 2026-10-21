@@ -8,11 +8,18 @@ const items = [
   ['interventions', 'Interventions', '✓'],
 ];
 
-export default function Sidebar({ page, setPage, onLogout, user, scopeLabel }) {
+export default function Sidebar({
+  page,
+  setPage,
+  onLogout,
+  user,
+  scopeLabel,
+  roleLabel,
+}) {
   const metadata = user?.user_metadata || {};
   const name = metadata.full_name || user?.email || 'Authenticated teacher';
   const email = user?.email || '';
-  const role = metadata.role || 'Teacher';
+  const role = roleLabel || 'Teacher';
   const photo = metadata.avatar_url || metadata.picture || '';
   const initials = name
     .split(/\s+/)

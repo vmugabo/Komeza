@@ -2,7 +2,7 @@ import React from 'react';
 import MetricCard from '../components/MetricCard';
 import RiskBadge from '../components/RiskBadge';
 import StudentTable from '../components/StudentTable';
-import { numericValue, percentValue, riskCount } from '../utils/data';
+import { numericValue, riskCount } from '../utils/data';
 
 export default function Dashboard({ students, onSelect, setPage }) {
   const attention = students
@@ -10,6 +10,12 @@ export default function Dashboard({ students, onSelect, setPage }) {
       (student) =>
         student.risks.dropout === 'High' || student.risks.academic === 'High',
     )
+    .sort((a, b) => {
+      return (
+        (numericValue(b.attendance.days_absent) ?? Number.NEGATIVE_INFINITY) -
+        (numericValue(a.attendance.days_absent) ?? Number.NEGATIVE_INFINITY)
+      );
+    })
     .slice(0, 8);
   const recentGrades = students
     .map((s) => numericValue(s.academic.recent_exam_score))
@@ -20,21 +26,23 @@ export default function Dashboard({ students, onSelect, setPage }) {
         recentGrades.length
       ).toFixed(1)
     : '—';
-  const attendance = students
-    .map((s) => numericValue(s.attendance.attendance_rate))
+  const daysAbsent = students
+    .map((s) => numericValue(s.attendance.days_absent))
     .filter((value) => value !== null);
-  const averageAttendance = attendance.length
-    ? percentValue(
-        attendance.reduce((sum, value) => sum + value, 0) / attendance.length,
-      )
+  const averageDaysAbsent = daysAbsent.length
+    ? (
+        daysAbsent.reduce((sum, value) => sum + value, 0) /
+        daysAbsent.length
+      ).toFixed(1)
     : '—';
-  const completion = students
-    .map((s) => numericValue(s.engagement.assignment_completion_rate))
+  const failedSubjects = students
+    .map((s) => numericValue(s.academic.previous_failed_subjects))
     .filter((value) => value !== null);
-  const averageCompletion = completion.length
-    ? percentValue(
-        completion.reduce((sum, value) => sum + value, 0) / completion.length,
-      )
+  const averageFailedSubjects = failedSubjects.length
+    ? (
+        failedSubjects.reduce((sum, value) => sum + value, 0) /
+        failedSubjects.length
+      ).toFixed(1)
     : '—';
   return (
     <section className='page'>
@@ -56,14 +64,14 @@ export default function Dashboard({ students, onSelect, setPage }) {
           detail='records in your workspace'
         />
         <MetricCard
-          label='Average attendance'
-          value={averageAttendance}
+          label='Average days absent'
+          value={averageDaysAbsent}
           detail='from attendance records'
         />
         <MetricCard
-          label='Assignment completion'
-          value={averageCompletion}
-          detail='where reported'
+          label='Average failed subjects'
+          value={averageFailedSubjects}
+          detail='from academic records'
         />
         <MetricCard
           label='Recent grade average'
@@ -86,7 +94,6 @@ export default function Dashboard({ students, onSelect, setPage }) {
             students={attention}
             onSelect={onSelect}
             compact
-            showAssignments={false}
           />
           <p className='table-note'>
             Priority list includes students with High academic or dropout risk

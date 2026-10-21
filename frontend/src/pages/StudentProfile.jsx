@@ -40,21 +40,14 @@ export default function StudentProfile({ student, factors, onBack }) {
       </div>
       <div className='metrics four'>
         <MetricCard
-          label='Attendance'
-          value={
-            percentValue(student.attendance.attendance_rate) ||
-            displayValue(student.attendance.days_absent)
-          }
-          detail={
-            percentValue(student.attendance.attendance_rate)
-              ? 'reported attendance'
-              : 'days absent'
-          }
+          label='Days absent'
+          value={displayValue(student.attendance.days_absent)}
+          detail='from attendance records'
         />
         <MetricCard
-          label='Assignments'
-          value={displayValue(student.engagement.completed_assignments)}
-          detail={`${displayValue(student.engagement.missed_assignments)} missed`}
+          label='Failed subjects'
+          value={displayValue(student.academic.previous_failed_subjects)}
+          detail='previous assessment'
         />
         <MetricCard
           label='Grade 1'
@@ -93,27 +86,8 @@ export default function StudentProfile({ student, factors, onBack }) {
               <dd>{displayValue(student.academic.previous_failed_subjects)}</dd>
             </div>
             <div>
-              <dt>Attendance rate</dt>
-              <dd>{percentValue(student.attendance.attendance_rate) || '—'}</dd>
-            </div>
-            <div>
               <dt>Days absent</dt>
               <dd>{displayValue(student.attendance.days_absent)}</dd>
-            </div>
-            <div>
-              <dt>Completed assignments</dt>
-              <dd>{displayValue(student.engagement.completed_assignments)}</dd>
-            </div>
-            <div>
-              <dt>Missed assignments</dt>
-              <dd>{displayValue(student.engagement.missed_assignments)}</dd>
-            </div>
-            <div>
-              <dt>Completion rate</dt>
-              <dd>
-                {percentValue(student.engagement.assignment_completion_rate) ||
-                  '—'}
-              </dd>
             </div>
             <div>
               <dt>Study time</dt>

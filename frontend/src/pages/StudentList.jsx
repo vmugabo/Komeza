@@ -23,13 +23,8 @@ export default function StudentList({ students, onSelect, mode = 'all' }) {
         .sort((a, b) => {
           if (sort === 'attendance')
             return (
-              (numericValue(b.attendance.days_absent) || -1) -
-              (numericValue(a.attendance.days_absent) || -1)
-            );
-          if (sort === 'completion')
-            return (
-              (numericValue(b.engagement.assignment_completion_rate) || -1) -
-              (numericValue(a.engagement.assignment_completion_rate) || -1)
+              (numericValue(b.attendance.days_absent) ?? -1) -
+              (numericValue(a.attendance.days_absent) ?? -1)
             );
           if (sort === 'recent_grade')
             return (
@@ -50,7 +45,7 @@ export default function StudentList({ students, onSelect, mode = 'all' }) {
     mode === 'academic'
       ? 'Review academic risk results alongside the student indicators that need attention.'
       : mode === 'dropout'
-        ? 'Review dropout risk results alongside attendance, assignments, and prior performance.'
+        ? 'Review dropout risk results alongside absences and prior performance.'
         : 'Search, sort, and open a student record for a fuller view.';
   return (
     <section className='page'>
@@ -97,8 +92,7 @@ export default function StudentList({ students, onSelect, mode = 'all' }) {
           <span>Sort by</span>
           <select value={sort} onChange={(e) => setSort(e.target.value)}>
             <option value='student_id'>Student ID</option>
-            <option value='attendance'>Absences</option>
-            <option value='completion'>Assignment completion</option>
+            <option value='attendance'>Days absent</option>
             <option value='recent_grade'>Recent grade</option>
           </select>
         </label>

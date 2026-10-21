@@ -13,3 +13,6 @@ komeza_wige/model_exports/
 
 # Private project material
 Video Link.docx
+
+# Local Supabase project configuration and migrations
+supabase/

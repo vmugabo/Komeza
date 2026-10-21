@@ -6,7 +6,6 @@ export default function StudentTable({
   students,
   onSelect,
   compact = false,
-  showAssignments = true,
 }) {
   return (
     <div className='table-scroll'>
@@ -14,8 +13,7 @@ export default function StudentTable({
         <thead>
           <tr>
             <th>Student</th>
-            <th>Attendance</th>
-            {showAssignments && <th>Assignments</th>}
+            <th>Days absent</th>
             <th>Recent grade</th>
             <th>Academic risk</th>
             <th>Dropout risk</th>
@@ -33,27 +31,9 @@ export default function StudentTable({
               </td>
               <td>
                 <strong>
-                  {percentValue(student.attendance.attendance_rate) ||
-                    displayValue(student.attendance.days_absent)}
+                  {displayValue(student.attendance.days_absent)}
                 </strong>
-                <small>
-                  {displayValue(student.attendance.days_absent)} absent
-                </small>
               </td>
-              {showAssignments && (
-                <td>
-                  <strong>
-                    {displayValue(student.engagement.completed_assignments)}
-                  </strong>
-                  <small>
-                    {displayValue(student.engagement.missed_assignments)} missed
-                    ·{' '}
-                    {percentValue(
-                      student.engagement.assignment_completion_rate,
-                    ) || 'rate —'}
-                  </small>
-                </td>
-              )}
               <td>{displayValue(student.academic.recent_exam_score)}</td>
               <td>
                 <RiskBadge value={student.risks.academic} />
@@ -68,7 +48,7 @@ export default function StudentTable({
           ))}
           {!students.length && (
             <tr>
-              <td colSpan={showAssignments ? 7 : 6} className='empty'>
+              <td colSpan={6} className='empty'>
                 No students match these filters.
               </td>
             </tr>

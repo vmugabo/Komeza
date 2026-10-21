@@ -61,7 +61,5 @@ export function validData(data) {
     'predictions',
     'factors',
   ];
-  return required.every(
-    (key) => Array.isArray(data[key]) && data[key].length > 0,
-  );
+  return required.every((key) => Array.isArray(data[key]));
 }

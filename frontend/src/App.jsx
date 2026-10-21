@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { loadLmsData } from './services/csvService';
+import {
+  loadDatabaseAccessScope,
+  loadLmsData,
+} from './services/dataService';
 import { combineStudentData, validData } from './utils/data';
 import Sidebar from './components/Sidebar';
 import Login from './components/Login';
@@ -8,7 +11,7 @@ import StudentList from './pages/StudentList';
 import StudentProfile from './pages/StudentProfile';
 import Interventions from './pages/Interventions';
 import { isSupabaseConfigured, supabase } from './services/supabaseClient';
-import { getAccessScope, restrictDataToScope } from './utils/access';
+import { formatRole, getDatabaseAccessScope } from './utils/access';
 
 const titles = {
   dashboard: 'Dashboard',
@@ -25,7 +28,11 @@ export default function App() {
   const [data, setData] = useState(null);
   const [selected, setSelected] = useState(null);
   const [error, setError] = useState('');
-  const accessScope = useMemo(() => getAccessScope(session?.user), [session]);
+  const [accessScope, setAccessScope] = useState({
+    schoolIds: new Set(),
+    label: 'Loading access',
+  });
+  const [accessProfile, setAccessProfile] = useState(null);
   useEffect(() => {
     if (!supabase) {
       setAuthLoading(false);
@@ -58,20 +65,36 @@ export default function App() {
     };
   }, []);
   useEffect(() => {
+    if (!session) return undefined;
+    let active = true;
+    loadDatabaseAccessScope(session.user.id)
+      .then(({ profile, assignments }) => {
+        if (active) {
+          setAccessProfile(profile);
+          setAccessScope(getDatabaseAccessScope(profile, assignments));
+        }
+      })
+      .catch((reason) => {
+        if (active) setError(reason.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+  useEffect(() => {
     if (!session) {
       setData(null);
       return undefined;
     }
     let active = true;
-    loadLmsData()
+    loadLmsData(accessScope)
       .then((loaded) => {
         if (!validData(loaded))
           throw new Error(
-            'One or more required data files are empty or invalid.',
+            'The school data response is invalid or incomplete.',
           );
-        const scoped = restrictDataToScope(loaded, accessScope);
         if (active)
-          setData({ ...scoped, students: combineStudentData(scoped) });
+          setData({ ...loaded, students: combineStudentData(loaded) });
       })
       .catch((reason) => {
         if (active) setError(reason.message);
@@ -183,7 +206,7 @@ export default function App() {
         <StudentList students={students} onSelect={openProfile} />
       );
     return null;
-  }, [data, page, selected, students]);
+  }, [accessScope, data, page, selected, students]);
   if (authLoading)
     return (
       <div className='loading'>
@@ -201,6 +224,7 @@ export default function App() {
     );
   if (!session) return <Login onLogin={login} />;
   const userName =
+    accessProfile?.full_name ||
     session.user.user_metadata?.full_name ||
     session.user.email ||
     'Authenticated user';
@@ -222,6 +246,7 @@ export default function App() {
         onLogout={logout}
         user={session.user}
         scopeLabel={accessScope.label}
+        roleLabel={formatRole(accessProfile?.role)}
       />
       <div className='workspace'>
         <header className='topbar'>
@@ -230,7 +255,8 @@ export default function App() {
             <h2>{page === 'profile' ? 'Student Profile' : titles[page]}</h2>
           </div>
           <div className='topbar-meta'>
-            <span className='status-dot' /> {accessScope.label} · {userName}{' '}
+            <span className='status-dot' /> {accessScope.label} ·{' '}
+            {formatRole(accessProfile?.role)} · {userName}{' '}
             <span className='topbar-avatar'>{userInitials}</span>
           </div>
         </header>

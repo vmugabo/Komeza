@@ -453,26 +453,6 @@ button {
   font-size: 12px;
   font-weight: 700;
 }
-.assignment-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-.assignment-row div {
-  background: #f7f9fb;
-  padding: 13px;
-  border-radius: 5px;
-}
-.assignment-row span {
-  display: block;
-  color: #778591;
-  font-size: 11px;
-}
-.assignment-row strong {
-  display: block;
-  font-size: 20px;
-  margin-top: 7px;
-}
 .progress {
   height: 8px;
   background: #e8eef1;
@@ -806,9 +786,6 @@ button {
   }
   .profile-risks {
     margin-top: 16px;
-  }
-  .assignment-row {
-    grid-template-columns: 1fr;
   }
   .table-scroll {
     margin: 0 -20px;
@@ -1033,26 +1010,6 @@ button {
   font-size: 12px;
   font-weight: 700;
 }
-.assignment-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-.assignment-row div {
-  background: #f7f9fb;
-  padding: 13px;
-  border-radius: 5px;
-}
-.assignment-row span {
-  display: block;
-  color: #778591;
-  font-size: 11px;
-}
-.assignment-row strong {
-  display: block;
-  font-size: 20px;
-  margin-top: 7px;
-}
 .progress {
   height: 8px;
   background: #e8eef1;
@@ -1386,9 +1343,6 @@ button {
   }
   .profile-risks {
     margin-top: 16px;
-  }
-  .assignment-row {
-    grid-template-columns: 1fr;
   }
   .table-scroll {
     margin: 0 -20px;
@@ -1941,9 +1895,6 @@ body {
   }
   .profile-risks {
     margin-top: 16px;
-  }
-  .assignment-row {
-    grid-template-columns: 1fr;
   }
   .table-scroll {
     margin: 0 -20px;
