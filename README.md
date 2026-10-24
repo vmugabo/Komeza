@@ -106,14 +106,3 @@ These results describe this dataset and this model run. They are not a
 guarantee of performance for another school or future cohort. The dropout
 result should be treated with particular care because the supplied label is
 derived from final grade rather than confirmed withdrawal or enrolment data.
-
-## Responsible use
-
-Risk results should guide review and support, not determine a student's future.
-Before using the system in practice:
-
-- Review the results with education stakeholders.
-- Confirm consent, governance, and data-retention requirements.
-- Give staff a way to correct inaccurate records.
-- Review false positives, false negatives, calibration, and subgroup outcomes.
-- Keep student data and model artifacts in protected storage.
