@@ -118,17 +118,15 @@ available. Supabase schema support for these fields is defined in
 The current notebook run selected a calibrated Decision Tree for academic risk
 and a calibrated Random Forest for dropout risk:
 
-| Output | Selected model | High-risk recall | High-risk precision | Balanced accuracy | Macro-F1 |
-| --- | --- | ---: | ---: | ---: | ---: |
-| Academic risk | Decision Tree | 0.85 | 0.68 | 0.811 | 0.788 |
-| Dropout early warning | Random Forest | 0.55 | 0.22 | 0.593 | 0.525 |
+| Output                | Selected model | High-risk recall | High-risk precision | Balanced accuracy | Macro-F1 |
+| --------------------- | -------------- | ---------------: | ------------------: | ----------------: | -------: |
+| Academic risk         | Decision Tree  |             0.85 |                0.68 |             0.811 |    0.788 |
+| Dropout early warning | Random Forest  |             0.55 |                0.22 |             0.593 |    0.525 |
 
 These results describe this dataset and this model run. They are not a
-guarantee of performance for another school or future cohort. The 0.92
-high-risk recall objective was not achieved on the untouched test partition.
-The dropout result should be treated with particular care because the supplied
-label is derived from final grade rather than confirmed withdrawal or
-enrolment data.
+guarantee of performance for another school or future cohort. The dropout
+result should be treated with particular care because the supplied label is
+derived from final grade rather than confirmed withdrawal or enrolment data.
 
 ## Responsible use
 
