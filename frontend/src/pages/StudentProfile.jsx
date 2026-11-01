@@ -1,5 +1,9 @@
 import React from 'react';
-import { displayValue, getFactors, percentValue } from '../utils/data';
+import {
+  displayValue,
+  getFactors,
+  percentValue,
+} from '../utils/data';
 import RiskBadge from '../components/RiskBadge';
 import MetricCard from '../components/MetricCard';
 
@@ -106,7 +110,7 @@ export default function StudentProfile({ student, factors, onBack }) {
             <span>Academic risk</span>
             <RiskBadge value={student.risks.academic} />
             <small>
-              {percentValue(student.prediction.prediction_probability) ||
+              {percentValue(student.probabilities.academic) ||
                 'Probability not supplied'}
             </small>
           </div>
@@ -129,7 +133,10 @@ export default function StudentProfile({ student, factors, onBack }) {
           <div className='prediction-callout'>
             <span>Dropout risk</span>
             <RiskBadge value={student.risks.dropout} />
-            <small>Current risk result</small>
+            <small>
+              {percentValue(student.probabilities.dropout) ||
+                'Probability not supplied'}
+            </small>
           </div>
           <div className='factor-section'>
             <strong>Dropout factors</strong>

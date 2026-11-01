@@ -15,6 +15,14 @@ export const percentValue = (value) => {
   return `${parsed <= 1 ? (parsed * 100).toFixed(0) : parsed.toFixed(0)}%`;
 };
 
+export const predictionProbability = (prediction, riskType) => {
+  const field =
+    riskType === 'academic'
+      ? 'academic_probability'
+      : 'dropout_probability';
+  return prediction[field] ?? prediction.prediction_probability;
+};
+
 export const riskCount = (students, field, value) =>
   students.filter((student) => student.risks[field] === value).length;
 
@@ -34,6 +42,10 @@ export function combineStudentData(data) {
       academic: academic[student.student_id] || {},
       engagement: engagement[student.student_id] || {},
       prediction,
+      probabilities: {
+        academic: predictionProbability(prediction, 'academic'),
+        dropout: predictionProbability(prediction, 'dropout'),
+      },
       risks: {
         academic: prediction.academic_risk || 'Unknown',
         dropout: prediction.dropout_risk || 'Unknown',

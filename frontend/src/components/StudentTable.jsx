@@ -17,7 +17,7 @@ export default function StudentTable({
             <th>Recent grade</th>
             <th>Academic risk</th>
             <th>Dropout risk</th>
-            <th>Probability</th>
+            <th>Risk probabilities</th>
           </tr>
         </thead>
         <tbody>
@@ -42,7 +42,12 @@ export default function StudentTable({
                 <RiskBadge value={student.risks.dropout} />
               </td>
               <td>
-                {percentValue(student.prediction.prediction_probability) || '—'}
+                <small>
+                  Academic: {percentValue(student.probabilities.academic) || '—'}
+                </small>
+                <small>
+                  Dropout: {percentValue(student.probabilities.dropout) || '—'}
+                </small>
               </td>
             </tr>
           ))}
