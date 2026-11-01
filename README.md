@@ -3,7 +3,8 @@
 ## Project links
 
 - **Video demonstration:**
-- **Project technical report:**
+
+- **Project technical report:** https://docs.google.com/document/d/1hdYKdq1m39RLUGkP3_bGMPLNzuMFXKPP/edit?usp=sharing&ouid=100482810958898950110&rtpof=true&sd=true
 
 Komeza is a student-support early-warning platform for teachers and district
 officials. It combines a Python model-training workflow with a React
