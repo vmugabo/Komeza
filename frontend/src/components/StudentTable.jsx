@@ -1,6 +1,6 @@
 import React from 'react';
 import RiskBadge from './RiskBadge';
-import { displayValue, percentValue } from '../utils/data';
+import { displayValue } from '../utils/data';
 
 export default function StudentTable({
   students,
@@ -17,7 +17,6 @@ export default function StudentTable({
             <th>Recent grade</th>
             <th>Academic risk</th>
             <th>Dropout risk</th>
-            <th>Risk probabilities</th>
           </tr>
         </thead>
         <tbody>
@@ -41,19 +40,11 @@ export default function StudentTable({
               <td>
                 <RiskBadge value={student.risks.dropout} />
               </td>
-              <td>
-                <small>
-                  Academic: {percentValue(student.probabilities.academic) || '—'}
-                </small>
-                <small>
-                  Dropout: {percentValue(student.probabilities.dropout) || '—'}
-                </small>
-              </td>
             </tr>
           ))}
           {!students.length && (
             <tr>
-              <td colSpan={6} className='empty'>
+              <td colSpan={5} className='empty'>
                 No students match these filters.
               </td>
             </tr>
