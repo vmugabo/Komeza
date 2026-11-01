@@ -1,39 +1,102 @@
-# Komeza
+# Komeza Wige
 
-Komeza helps teachers review student progress and decide who may need extra
-support. It combines a Python-based risk analysis notebook with a React web
-application.
+## Project links
 
-The project is an early-warning tool, not a way to label students or make
-decisions about their education. Its results are best used to start a
-supportive conversation and decide what to look at next.
+- **Video demonstration:**
+- **Project technical report:**
 
-## How it works
+Komeza is a student-support early-warning platform for teachers and district
+officials. It combines a Python model-training workflow with a React
+dashboard backed by Supabase. Staff can review attendance, academic,
+engagement, and risk information to decide which students may need a
+supportive follow-up.
 
-The notebook reads the source student dataset, prepares the analysis fields,
-trains academic and dropout early-warning models, and checks how well they
-perform. The web application presents the resulting student indicators and
-risk results to authorised users.
+> **Responsible use:** Komeza is an early-warning and review tool, not a
+> system for labelling students or making decisions about their education.
+> Risk results should support professional judgement and a conversation with
+> the student, never replace either one.
+
+## Features
+
+- Teacher dashboard with student counts, attendance, failed-subject, and recent
+  grade summaries.
+- Separate academic-risk and dropout-risk views.
+- Student profiles with contributing risk factors and supporting records.
+- Intervention workflow for prioritising students who may need follow-up.
+- Supabase email/password authentication.
+- Row-level security and school-scoped access for teachers.
+- District-official access across schools.
+- Calibrated Python models with exported metrics, probabilities, and subgroup
+  evaluation results.
+
+## Architecture
 
 ```text
-Python notebook → React web application
+student_risk_assessment.ipynb
+        │
+        ├── trains and evaluates academic/dropout models
+        └── writes model_exports/ artifacts
+
+Supabase Auth + PostgreSQL
+        │
+        ├── student, attendance, academic, engagement records
+        ├── risk predictions and risk factors
+        └── role and school-access policies
+
+React/Vite frontend
+        │
+        └── authenticated teacher and district-official workspace
 ```
 
-## Project layout
+## Repository layout
 
 ```text
 Komeza/
-├── frontend/                         # React/Vite web application
+├── frontend/                         # React/Vite dashboard
+│   ├── src/components/               # Reusable dashboard components
+│   ├── src/pages/                    # Dashboard, student, and intervention views
+│   └── src/services/                 # Supabase client and data access
 ├── komeza_wige/
-│   ├── student_risk_assessment.ipynb # Analysis and model-training notebook
-│   └── model_exports/                # Models and evaluation reports
+│   ├── student_risk_assessment.ipynb # Data preparation and model training
+│   ├── model_utils.py                # sklearn-compatible model helpers
+│   └── model_exports/                # Generated models and evaluation reports
+├── supabase/migrations/              # Database schema and access policies
+├── deploy/nginx-komeza.conf          # Production Nginx configuration
 ├── requirements.txt                  # Python dependencies
 └── README.md
 ```
 
-## Run the notebook
+## Prerequisites
 
-You need Python 3.10 or newer and Jupyter Notebook or JupyterLab.
+- Python 3.10 or newer
+- Node.js and npm
+- A Supabase project
+- Jupyter Notebook or JupyterLab
+
+## Run the frontend locally
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite, then sign in with an authenticated
+Supabase user. The available data is determined by the user's role and school
+assignments. A missing `.env.local` produces a configuration message instead
+of attempting to load school data.
+
+Create a production bundle with:
+
+```bash
+cd frontend
+npm run build
+npm run preview
+```
+
+## Train and evaluate the models
+
+Create and activate a virtual environment from the repository root:
 
 ```bash
 python3 -m venv .venv
@@ -45,75 +108,86 @@ python -m pip install -r requirements.txt
 jupyter notebook komeza_wige/student_risk_assessment.ipynb
 ```
 
-Run the notebook cells in order. It loads and checks the source data, prepares
-the features, trains five calibrated classifiers for each target, evaluates
-them with repeated stratified cross-validation, and writes the model and
-evaluation files.
+Run the notebook cells in order. It loads the source dataset, prepares
+features, trains and calibrates candidate classifiers, evaluates them with
+cross-validation, selects thresholds using training-only out-of-fold
+predictions, and exports the selected models and evaluation files.
 
-The current source file has 649 rows and 34 columns. Its accompanying
-description refers to 700 rows and 36 columns; the notebook reports this
-difference rather than hiding it.
+The current source file contains 649 rows and 34 columns. The accompanying
+dataset description refers to 700 rows and 36 columns; the notebook reports
+that discrepancy rather than silently changing the data.
 
-## What the notebook analyses
+### Model design
 
-- Academic risk based on final attainment, without using the final grade as a
-  predictor.
-- Dropout early-warning risk based on contextual and behavioural information,
+- **Academic risk:** predicts risk based on final attainment without using the
+  final grade as a predictor.
+- **Dropout early warning:** uses contextual and behavioural information
   without using grade columns.
-- Academic risk includes Grade 1/Grade 2 trajectory features:
-  `grade_change`, `mean_prior_grade`, `grade_decline`, and
-  `absence_per_failure`.
+- Academic trajectory features include `grade_change`,
+  `mean_prior_grade`, `grade_decline`, and `absence_per_failure`.
 - `Going_Out`, `Weekend_Alcohol_Consumption`, and
   `Weekday_Alcohol_Consumption` are excluded from both models.
-- Model performance, calibrated probabilities, and concise subgroup checks.
+- Preprocessing is fitted inside each training pipeline.
+- Class weighting is used instead of post-encoding SMOTE.
+- Probabilities are calibrated with sigmoid `CalibratedClassifierCV`.
+- Thresholds target high-risk recall of at least 0.85 where achievable.
+- The final test partition remains untouched until evaluation.
 
-The source uses ordinal values for fields such as `Travel_Time` and
-`Study_Time`. The notebook converts these values into readable bands before
-training the models.
+### Generated model artifacts
 
-Preprocessing is fitted inside each training pipeline. The models use
-class-weighting rather than post-encoding SMOTE, and probability calibration
-uses sigmoid `CalibratedClassifierCV`. Thresholds are selected from
-training-only out-of-fold predictions with a high-risk recall target of at
-least 0.85 where achievable. The final test partition remains untouched until
-evaluation.
+The notebook writes these files to `komeza_wige/model_exports/`:
 
-## Model outputs
+| File                         | Purpose                                    |
+| ---------------------------- | ------------------------------------------ |
+| `academic_risk_model.joblib` | Trained academic-risk pipeline             |
+| `dropout_risk_model.joblib`  | Trained dropout-risk pipeline              |
+| `model_metadata.json`        | Training configuration and selected models |
+| `model_metrics.csv`          | Classification performance metrics         |
+| `calibration_metrics.csv`    | Probability-calibration metrics            |
+| `subgroup_outcomes.csv`      | Subgroup evaluation results                |
+| `feature_importance.csv`     | Feature-importance summary                 |
 
-The notebook keeps the following files in `komeza_wige/model_exports/`:
+These are development and evaluation artifacts. The React application reads
+prediction records from Supabase; it does not load the `.joblib` files
+directly.
 
-- `academic_risk_model.joblib`
-- `dropout_risk_model.joblib`
-- `model_metadata.json`
-- `model_metrics.csv`
-- `calibration_metrics.csv`
-- `subgroup_outcomes.csv`
-- `feature_importance.csv`
+## Data model
 
-The `.joblib` files contain the trained models. The JSON and CSV files explain
-how they were built and how they performed. These are development and
-evaluation artifacts; the React application does not load them directly.
+The Supabase schema stores:
 
-## Frontend
+- `students`: identity, grade, school, age, gender, and enrolment date.
+- `attendance_records`: attendance rates, absences, and record dates.
+- `academic_records`: assessment scores, failed subjects, and performance
+  change.
+- `engagement_records`: study time, assignment completion, participation, and
+  platform activity.
+- `risk_predictions`: academic and dropout risk labels plus calibrated
+  target-specific probabilities.
+- `risk_factors`: ranked factors contributing to a risk result.
+- `profiles`: authenticated user role and display name.
+- `user_school_access`: school assignments for teacher accounts.
 
-Install the frontend dependencies and start the development server:
+The frontend keeps `prediction_probability` as a legacy fallback and prefers
+`academic_probability` or `dropout_probability` when those fields are
+available.
+
+## Deployment
+
+Build the frontend and copy the generated `frontend/dist/` contents to the
+configured web root:
 
 ```bash
 cd frontend
-npm install
-npm run dev
+npm ci
+npm run build
 ```
 
-The production frontend is served at [nile.co.rw](https://nile.co.rw) when
-deployed to the configured Linode server.
+The production Nginx configuration in `deploy/nginx-komeza.conf` serves the
+single-page application, falls back to `index.html` for client-side routes,
+and redirects HTTP to HTTPS. It is configured for `nile.co.rw`; update the
+domain, certificate paths, and web root before deploying to another server.
 
-Risk predictions support separate `academic_probability` and
-`dropout_probability` values. The frontend falls back to the legacy
-`prediction_probability` field when target-specific probabilities are not
-available. Supabase schema support for these fields is defined in
-`supabase/migrations/003_model_probability_fields.sql`.
-
-## Current evaluation
+## Current evaluation snapshot
 
 The current notebook run selected a calibrated Decision Tree for academic risk
 and a calibrated Random Forest for dropout risk:
@@ -123,18 +197,19 @@ and a calibrated Random Forest for dropout risk:
 | Academic risk         | Decision Tree  |             0.85 |                0.68 |             0.811 |    0.788 |
 | Dropout early warning | Random Forest  |             0.55 |                0.22 |             0.593 |    0.525 |
 
-These results describe this dataset and this model run. They are not a
-guarantee of performance for another school or future cohort. The dropout
-result should be treated with particular care because the supplied label is
-derived from final grade rather than confirmed withdrawal or enrolment data.
+These results describe this dataset and model run; they are not a guarantee of
+performance for another school or future cohort. The dropout result requires
+particular care because the supplied label is derived from final grade rather
+than confirmed withdrawal or enrolment data.
 
-## Responsible use
+## Privacy and responsible operation
 
-Risk results should guide review and support, not determine a student's future.
-Before using the system in practice:
+Before using Komeza with real student data:
 
-- Review the results with education stakeholders.
 - Confirm consent, governance, and data-retention requirements.
+- Keep student records, credentials, and model artifacts in protected storage.
+- Use Row Level Security and verify school assignments before granting access.
 - Give staff a way to correct inaccurate records.
 - Review false positives, false negatives, calibration, and subgroup outcomes.
-- Keep student data and model artifacts in protected storage.
+- Treat every risk result as a prompt for supportive review, not a final
+  judgement about a student.
