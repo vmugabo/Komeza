@@ -46,8 +46,9 @@ jupyter notebook komeza_wige/student_risk_assessment.ipynb
 ```
 
 Run the notebook cells in order. It loads and checks the source data, prepares
-the features, trains the models, evaluates them with stratified
-cross-validation, and writes the model and evaluation files.
+the features, trains five calibrated classifiers for each target, evaluates
+them with repeated stratified cross-validation, and writes the model and
+evaluation files.
 
 The current source file has 649 rows and 34 columns. Its accompanying
 description refers to 700 rows and 36 columns; the notebook reports this
@@ -59,11 +60,23 @@ difference rather than hiding it.
   predictor.
 - Dropout early-warning risk based on contextual and behavioural information,
   without using grade columns.
-- Model performance, calibration, and outcomes across student groups.
+- Academic risk includes Grade 1/Grade 2 trajectory features:
+  `grade_change`, `mean_prior_grade`, `grade_decline`, and
+  `absence_per_failure`.
+- `Going_Out`, `Weekend_Alcohol_Consumption`, and
+  `Weekday_Alcohol_Consumption` are excluded from both models.
+- Model performance, calibrated probabilities, and concise subgroup checks.
 
 The source uses ordinal values for fields such as `Travel_Time` and
 `Study_Time`. The notebook converts these values into readable bands before
 training the models.
+
+Preprocessing is fitted inside each training pipeline. The models use
+class-weighting rather than post-encoding SMOTE, and probability calibration
+uses sigmoid `CalibratedClassifierCV`. Thresholds are selected from
+training-only out-of-fold predictions with a high-risk recall target of at
+least 0.85 where achievable. The final test partition remains untouched until
+evaluation.
 
 ## Model outputs
 
@@ -75,6 +88,7 @@ The notebook keeps the following files in `komeza_wige/model_exports/`:
 - `model_metrics.csv`
 - `calibration_metrics.csv`
 - `subgroup_outcomes.csv`
+- `feature_importance.csv`
 
 The `.joblib` files contain the trained models. The JSON and CSV files explain
 how they were built and how they performed. These are development and
@@ -93,19 +107,28 @@ npm run dev
 The production frontend is served at [nile.co.rw](https://nile.co.rw) when
 deployed to the configured Linode server.
 
+Risk predictions support separate `academic_probability` and
+`dropout_probability` values. The frontend falls back to the legacy
+`prediction_probability` field when target-specific probabilities are not
+available. Supabase schema support for these fields is defined in
+`supabase/migrations/003_model_probability_fields.sql`.
+
 ## Current evaluation
 
-The current notebook run selected random forests:
+The current notebook run selected a calibrated Decision Tree for academic risk
+and a calibrated Random Forest for dropout risk:
 
-| Output | Balanced accuracy | Macro-F1 |
-| --- | ---: | ---: |
-| Academic risk | 0.815 | 0.808 |
-| Dropout early warning | 0.694 | 0.692 |
+| Output | Selected model | High-risk recall | High-risk precision | Balanced accuracy | Macro-F1 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Academic risk | Decision Tree | 0.85 | 0.68 | 0.811 | 0.788 |
+| Dropout early warning | Random Forest | 0.55 | 0.22 | 0.593 | 0.525 |
 
 These results describe this dataset and this model run. They are not a
-guarantee of performance for another school or future cohort. The dropout
-result should be treated with particular care because the supplied label is
-derived from final grade rather than confirmed withdrawal or enrolment data.
+guarantee of performance for another school or future cohort. The 0.92
+high-risk recall objective was not achieved on the untouched test partition.
+The dropout result should be treated with particular care because the supplied
+label is derived from final grade rather than confirmed withdrawal or
+enrolment data.
 
 ## Responsible use
 
