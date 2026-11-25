@@ -16,11 +16,12 @@ export function getDatabaseAccessScope(profile, assignments) {
   }
   const schoolIds = new Set(
     (assignments || [])
-      .map(({ school_id }) => normalize(school_id))
-      .filter(Boolean),
+      .map(({ school_id }) => String(school_id || ''))
+      .filter((schoolId) => normalize(schoolId)),
   );
+  const labels = [...new Set([...schoolIds].map(normalize))];
   return {
     schoolIds,
-    label: schoolIds.size ? [...schoolIds].join(', ') : 'No school assigned',
+    label: labels.length ? labels.join(', ') : 'No school assigned',
   };
 }

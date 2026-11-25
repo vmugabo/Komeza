@@ -86,7 +86,6 @@ export default function Sidebar({
       </nav>
       <div className='sidebar-footer'>
         <span>{scopeLabel}</span>
-        <small>Need-to-know access</small>
       </div>
     </aside>
   );

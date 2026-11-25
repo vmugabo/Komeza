@@ -27,6 +27,66 @@ async function readTable(table, studentIds = null) {
   return data || [];
 }
 
+function mapIntervention(row) {
+  return {
+    id: row.id,
+    studentId: row.student_id,
+    note: row.note,
+    status: row.status,
+    date: row.intervention_date,
+    followUpDate: row.follow_up_date || '',
+  };
+}
+
+export async function loadInterventions(studentId = null) {
+  if (!supabase) {
+    throw new Error(
+      'Supabase is not configured. Add the required environment variables before loading interventions.',
+    );
+  }
+
+  let query = supabase
+    .from('interventions')
+    .select(
+      'id, student_id, note, status, intervention_date, follow_up_date',
+    )
+    .order('intervention_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (studentId) query = query.eq('student_id', studentId);
+
+  const { data, error } = await query;
+  if (error) throw new Error(`Unable to load interventions: ${error.message}`);
+  return (data || []).map(mapIntervention);
+}
+
+export async function saveIntervention({
+  studentId,
+  note,
+  status,
+  followUpDate,
+}) {
+  if (!supabase) {
+    throw new Error(
+      'Supabase is not configured. Add the required environment variables before saving interventions.',
+    );
+  }
+
+  const { data, error } = await supabase
+    .from('interventions')
+    .insert({
+      student_id: studentId,
+      note,
+      status,
+      follow_up_date: followUpDate || null,
+    })
+    .select(
+      'id, student_id, note, status, intervention_date, follow_up_date',
+    )
+    .single();
+  if (error) throw new Error(`Unable to save intervention: ${error.message}`);
+  return mapIntervention(data);
+}
+
 export async function loadLmsData(scope) {
   if (!supabase) {
     throw new Error(
@@ -37,7 +97,8 @@ export async function loadLmsData(scope) {
   const schoolIds = scope?.schoolIds || null;
   let studentQuery = supabase.from(TABLES.students).select('*');
   if (schoolIds) {
-    if (!schoolIds.length) {
+    const assignedSchoolIds = [...schoolIds];
+    if (!assignedSchoolIds.length) {
       return {
         students: [],
         attendance: [],
@@ -47,7 +108,7 @@ export async function loadLmsData(scope) {
         factors: [],
       };
     }
-
+    studentQuery = studentQuery.in('school_id', assignedSchoolIds);
   }
 
   const { data: students, error } = await studentQuery;

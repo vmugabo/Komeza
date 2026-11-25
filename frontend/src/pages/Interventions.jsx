@@ -1,35 +1,57 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import RiskBadge from '../components/RiskBadge';
+import {
+  loadInterventions,
+  saveIntervention,
+} from '../services/dataService';
 
 export default function Interventions({ students, onSelect }) {
-  const [items, setItems] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('komeza-interventions') || '[]');
-    } catch {
-      return [];
-    }
-  });
+  const [items, setItems] = useState([]);
   const [studentId, setStudentId] = useState('');
   const [note, setNote] = useState('');
-  const save = (event) => {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    loadInterventions()
+      .then((loaded) => {
+        if (active) setItems(loaded);
+      })
+      .catch((reason) => {
+        if (active) setError(reason.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const save = async (event) => {
     event.preventDefault();
     if (!studentId || !note.trim()) return;
-    const next = [
-      {
-        id: Date.now(),
+    const form = event.currentTarget;
+    setSaving(true);
+    setError('');
+    try {
+      const saved = await saveIntervention({
         studentId,
         note: note.trim(),
-        date: new Date().toLocaleDateString(),
-        followUpDate: event.currentTarget.followUpDate.value,
-        status: event.currentTarget.status.value,
-      },
-      ...items,
-    ];
-    setItems(next);
-    localStorage.setItem('komeza-interventions', JSON.stringify(next));
-    setNote('');
-    setStudentId('');
-    event.currentTarget.reset();
+        followUpDate: form.followUpDate.value,
+        status: form.status.value,
+      });
+      setItems((current) => [saved, ...current]);
+      setNote('');
+      setStudentId('');
+      form.reset();
+    } catch (reason) {
+      setError(reason.message);
+    } finally {
+      setSaving(false);
+    }
   };
   return (
     <section className='page'>
@@ -38,11 +60,11 @@ export default function Interventions({ students, onSelect }) {
           <p className='eyebrow'>Teacher follow-up</p>
           <h1>Interventions</h1>
           <p>
-            Record supportive actions and planned follow-up. Notes are stored
-            only in this browser.
+            Record supportive actions and planned follow-up. Notes are saved
+            securely in Supabase.
           </p>
         </div>
-        <span className='data-label'>Local prototype records</span>
+        <span className='data-label'>Supabase records</span>
       </div>
       <div className='intervention-grid'>
         <form className='panel form-panel' onSubmit={save}>
@@ -87,14 +109,17 @@ export default function Interventions({ students, onSelect }) {
               required
             />
           </label>
-          <button className='primary' type='submit'>
-            Save intervention
+          <button className='primary' type='submit' disabled={saving}>
+            {saving ? 'Saving…' : 'Save intervention'}
           </button>
+          {error && <p className='error-state' role='alert'>{error}</p>}
         </form>
         <div className='panel'>
           <p className='eyebrow'>Recent notes</p>
           <h2>Intervention log</h2>
-          {items.length ? (
+          {loading ? (
+            <p className='muted'>Loading interventions…</p>
+          ) : items.length ? (
             items.map((item) => {
               const student = students.find(
                 (s) => s.student_id === item.studentId,

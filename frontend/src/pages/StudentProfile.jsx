@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   displayValue,
   getFactors,
@@ -6,19 +6,62 @@ import {
 } from '../utils/data';
 import RiskBadge from '../components/RiskBadge';
 import MetricCard from '../components/MetricCard';
+import {
+  loadInterventions,
+  saveIntervention,
+} from '../services/dataService';
 
 export default function StudentProfile({ student, factors, onBack }) {
   const academicFactors = getFactors(factors, student.student_id, 'academic');
   const dropoutFactors = getFactors(factors, student.student_id, 'dropout');
-  const interventions = (() => {
+  const [interventions, setInterventions] = useState([]);
+  const [interventionsLoading, setInterventionsLoading] = useState(true);
+  const [interventionsError, setInterventionsError] = useState('');
+  const [note, setNote] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    setInterventionsLoading(true);
+    setInterventionsError('');
+    loadInterventions(student.student_id)
+      .then((loaded) => {
+        if (active) setInterventions(loaded);
+      })
+      .catch((reason) => {
+        if (active) setInterventionsError(reason.message);
+      })
+      .finally(() => {
+        if (active) setInterventionsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [student.student_id]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    setSaving(true);
+    setSaveError('');
     try {
-      return JSON.parse(
-        localStorage.getItem('komeza-interventions') || '[]',
-      ).filter((item) => item.studentId === student.student_id);
-    } catch {
-      return [];
+      const saved = await saveIntervention({
+        studentId: student.student_id,
+        note: note.trim(),
+        status: form.status.value,
+        followUpDate: form.followUpDate.value,
+      });
+      setInterventions((current) => [saved, ...current]);
+      setNote('');
+      form.reset();
+    } catch (reason) {
+      setSaveError(reason.message);
+    } finally {
+      setSaving(false);
     }
-  })();
+  };
+
   return (
     <section className='page'>
       <button className='back-link' onClick={onBack}>
@@ -156,6 +199,39 @@ export default function StudentProfile({ student, factors, onBack }) {
           </div>
         </div>
       </div>
+      <div className='panel form-panel'>
+        <p className='eyebrow'>Teacher follow-up</p>
+        <h2>Record support action</h2>
+        <form onSubmit={save}>
+          <label>
+            Action status
+            <select name='status' defaultValue='Planned'>
+              <option>Planned</option>
+              <option>In progress</option>
+              <option>Completed</option>
+              <option>Follow-up needed</option>
+            </select>
+          </label>
+          <label>
+            Follow-up date
+            <input name='followUpDate' type='date' />
+          </label>
+          <label>
+            Notes
+            <textarea
+              rows='4'
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder='What support was discussed or provided?'
+              required
+            />
+          </label>
+          <button className='primary' type='submit' disabled={saving}>
+            {saving ? 'Saving…' : 'Save intervention'}
+          </button>
+          {saveError && <p className='error-state' role='alert'>{saveError}</p>}
+        </form>
+      </div>
       <div className='panel recent-data'>
         <div className='panel-heading'>
           <div>
@@ -163,7 +239,11 @@ export default function StudentProfile({ student, factors, onBack }) {
             <h2>Intervention history</h2>
           </div>
         </div>
-        {interventions.length ? (
+        {interventionsLoading ? (
+          <p className='muted'>Loading intervention history…</p>
+        ) : interventionsError ? (
+          <p className='error-state' role='alert'>{interventionsError}</p>
+        ) : interventions.length ? (
           interventions.map((item) => (
             <div className='intervention compact-intervention' key={item.id}>
               <div>
@@ -178,7 +258,7 @@ export default function StudentProfile({ student, factors, onBack }) {
           ))
         ) : (
           <p className='muted'>
-            No local intervention notes recorded for this student.
+            No intervention notes recorded for this student.
           </p>
         )}
       </div>

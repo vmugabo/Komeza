@@ -15,4 +15,7 @@ komeza_wige/model_exports/
 Video Link.docx
 
 # Local Supabase project configuration and migrations
-supabase/
+supabase/*
+!supabase/migrations/
+supabase/migrations/*
+!supabase/migrations/004_interventions.sql
